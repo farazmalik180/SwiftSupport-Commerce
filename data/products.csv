@@ -1,0 +1,26 @@
+id,name,category,description,price,stock
+P1001,AuraBeat Pro Wireless Headphones,Electronics,Over-ear Bluetooth 5.3 headphones with active noise cancellation and 40-hour battery life,149.99,42
+P1002,PulseBuds Mini Earbuds,Electronics,Compact true wireless earbuds with IPX5 water resistance and wireless charging case,59.99,120
+P1003,VoltCharge 65W GaN Charger,Electronics,Dual-port USB-C fast charger compatible with laptops phones and tablets,39.99,200
+P1004,LumiDesk LED Desk Lamp,Home Office,Dimmable LED lamp with adjustable color temperature and built-in USB charging port,34.50,75
+P1005,ErgoFlex Office Chair,Home Office,Ergonomic mesh office chair with lumbar support and adjustable armrests,229.00,0
+P1006,StandUp Electric Desk,Home Office,Height-adjustable electric standing desk with memory presets and 140cm top,399.00,12
+P1007,TrailBlazer 45L Backpack,Outdoor,Water-resistant hiking backpack with rain cover and padded laptop sleeve,89.95,58
+P1008,SummitPeak 2-Person Tent,Outdoor,Lightweight three-season camping tent with quick-pitch poles,179.00,9
+P1009,HydroSteel 1L Water Bottle,Outdoor,Double-wall vacuum insulated stainless steel bottle keeps drinks cold 24 hours,27.00,310
+P1010,ZenBrew Pour-Over Coffee Set,Kitchen,Glass carafe pour-over coffee maker with reusable steel filter and bamboo stand,44.00,36
+P1011,ChefEdge 8in Chef Knife,Kitchen,High-carbon stainless steel chef knife with ergonomic pakkawood handle,69.00,27
+P1012,AirCrisp Digital Air Fryer 5L,Kitchen,Digital air fryer with 8 presets and dishwasher-safe basket,109.00,0
+P1013,CloudRest Memory Foam Pillow,Home & Living,Contoured memory foam pillow with cooling gel layer and washable cover,49.99,95
+P1014,AromaGlow Essential Oil Diffuser,Home & Living,Ultrasonic aroma diffuser with seven ambient light modes and auto shutoff,29.99,140
+P1015,UrbanStride Running Shoes,Footwear,Breathable lightweight running shoes with responsive cushioning,119.00,64
+P1016,TrekMaster Hiking Boots,Footwear,Waterproof leather hiking boots with grippy rubber outsole,159.00,18
+P1017,FlexFit Yoga Mat 6mm,Fitness,Non-slip eco-friendly TPE yoga mat with alignment lines and carry strap,32.00,150
+P1018,IronGrip Adjustable Dumbbells,Fitness,Pair of adjustable dumbbells 2-24kg with quick-select dial,289.00,6
+P1019,PulseTrack Fitness Watch,Wearables,Fitness smartwatch with heart-rate monitor GPS and 10-day battery,129.00,51
+P1020,SnapShield Phone Case,Accessories,Shock-absorbing clear phone case with raised camera bezel,19.99,500
+P1021,PixelGuard Tempered Glass Protector,Accessories,9H hardness tempered glass screen protector two-pack with install frame,12.99,420
+P1022,NovaBook 14 Laptop,Electronics,14-inch laptop with 16GB RAM 512GB SSD and all-day battery,849.00,15
+P1023,TypeWave Mechanical Keyboard,Electronics,Wireless mechanical keyboard with hot-swappable switches and RGB backlight,89.00,0
+P1024,SwiftMouse Ergonomic Wireless Mouse,Electronics,Vertical ergonomic mouse with silent clicks and adjustable DPI,34.99,88
+P1025,GlowSkin Vitamin C Serum,Beauty,Brightening vitamin C facial serum with hyaluronic acid 30ml,24.50,205

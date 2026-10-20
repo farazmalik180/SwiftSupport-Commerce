@@ -3,6 +3,8 @@
 An open-source, multi-agent **E-Commerce Customer Support & Concierge** system built with
 **LangGraph** and **Groq** (free tier), backed by mock CSV datasets.
 
+🚀 **Live demo:** <https://farazmalik180-swiftsupport-commerce-streamlit-app-rwulgl.streamlit.app/>
+
 ## Architecture
 
 ```mermaid

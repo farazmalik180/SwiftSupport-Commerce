@@ -9,7 +9,7 @@ import csv
 import math
 import re
 from datetime import date
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app import config
 
@@ -140,10 +140,17 @@ def search_catalog(query: str) -> str:
 # --------------------------------------------------------------------------- #
 # Tool 2: order status
 # --------------------------------------------------------------------------- #
-def _find_order(order_id: str) -> Row | None:
+_NOT_LOGGED_IN = (
+    "Error: the customer is not authenticated, so order data is unavailable. "
+    "Ask them to log in first."
+)
+
+
+def _find_order(order_id: str, customer_id: Optional[str]) -> Row | None:
+    """Find an order owned by `customer_id`. Orders owned by others are treated as not found."""
     oid = _normalize_order_id(order_id)
     for row in _read_csv(config.ORDERS_CSV):
-        if row["order_id"].upper() == oid:
+        if row["order_id"].upper() == oid and row["customer_id"] == customer_id:
             return row
     return None
 
@@ -155,12 +162,14 @@ def _product_name(product_id: str) -> str:
     return product_id
 
 
-def check_order_status(order_id: str) -> str:
-    """Look up an order in orders.csv and describe its status."""
+def check_order_status(order_id: str, customer_id: Optional[str] = None) -> str:
+    """Look up one of the authenticated customer's orders and describe its status."""
     try:
+        if not customer_id:
+            return _NOT_LOGGED_IN
         if not order_id or not order_id.strip():
             return "Error: no order ID provided. Ask the customer for their order ID (format ORD-12345)."
-        order = _find_order(order_id)
+        order = _find_order(order_id, customer_id)
         if order is None:
             return (
                 f"Order '{order_id}' was not found. Ask the customer to double-check the order ID "
@@ -211,12 +220,14 @@ def _evaluate_refund(order: Row) -> Tuple[str, str]:
     return "Denied", f"Unknown order status '{status}'; escalate to a human agent."
 
 
-def calculate_refund_eligibility(order_id: str) -> str:
+def calculate_refund_eligibility(order_id: str, customer_id: Optional[str] = None) -> str:
     """Decide refund eligibility from order status and purchase date (30-day policy)."""
     try:
+        if not customer_id:
+            return _NOT_LOGGED_IN
         if not order_id or not order_id.strip():
             return "Error: no order ID provided. Ask the customer for their order ID (format ORD-12345)."
-        order = _find_order(order_id)
+        order = _find_order(order_id, customer_id)
         if order is None:
             return (
                 f"Order '{order_id}' was not found, so eligibility cannot be determined. "
@@ -230,12 +241,14 @@ def calculate_refund_eligibility(order_id: str) -> str:
         return f"Error: eligibility check failed ({type(exc).__name__}). Ask the customer to retry."
 
 
-def process_refund(order_id: str) -> str:
+def process_refund(order_id: str, customer_id: Optional[str] = None) -> str:
     """Process a MOCK refund. Only succeeds when eligibility is 'Approved'."""
     try:
+        if not customer_id:
+            return _NOT_LOGGED_IN
         if not order_id or not order_id.strip():
             return "Error: no order ID provided. Ask the customer for their order ID."
-        order = _find_order(order_id)
+        order = _find_order(order_id, customer_id)
         if order is None:
             return f"Order '{order_id}' was not found. Ask the customer to confirm the order ID."
         decision, reason = _evaluate_refund(order)

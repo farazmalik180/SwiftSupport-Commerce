@@ -9,7 +9,7 @@ from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from app import config, tools as T
+from app import auth, config, tools as T
 from app.prompts import PROMPTS
 from app.state import CATALOG, ORDERS, TRIAGE, AgentState
 
@@ -72,6 +72,16 @@ AGENT_TOOLS = {
 }
 DATA_TOOLS = {t.name: t for ts in AGENT_TOOLS.values() for t in ts if t.name not in HANDOFFS}
 
+# Plain callables executed by the graph. Order tools receive the authenticated customer_id from
+# graph state; any customer_id the LLM tries to supply is discarded.
+PLAIN_TOOLS = {
+    "search_catalog": T.search_catalog,
+    "check_order_status": T.check_order_status,
+    "calculate_refund_eligibility": T.calculate_refund_eligibility,
+    "process_refund": T.process_refund,
+}
+ORDER_TOOLS = {"check_order_status", "calculate_refund_eligibility", "process_refund"}
+
 
 # --------------------------------------------------------------------------- #
 # Graph construction
@@ -88,7 +98,12 @@ def build_graph():
 
     def make_agent_node(agent: str):
         def node(state: AgentState) -> Dict[str, Any]:
-            messages = [SystemMessage(content=PROMPTS[agent])] + state["messages"]
+            customer_ctx = (
+                f"\n\nSESSION CONTEXT: the customer is logged in as {auth.get_name(state.get('customer_id', ''))} "
+                f"({state.get('customer_id', 'unknown')}). Never ask for their customer ID or PIN. "
+                "You can only access this customer's own orders."
+            )
+            messages = [SystemMessage(content=PROMPTS[agent] + customer_ctx)] + state["messages"]
             nudge = HumanMessage(
                 content="(system) Your last reply was empty. Reply now: either a one-line 'Thought:' "
                 "plus a tool call, or the final answer to the customer."
@@ -127,7 +142,11 @@ def build_graph():
                 content = f"Transferred to the {active} agent. Continue helping with the customer's latest request."
             else:
                 try:
-                    content = str(DATA_TOOLS[name].invoke(call["args"]))
+                    args = dict(call["args"])
+                    if name in ORDER_TOOLS:
+                        args = {"order_id": str(args.get("order_id", "")),
+                                "customer_id": state.get("customer_id") or None}
+                    content = str(PLAIN_TOOLS[name](**args))
                 except Exception as exc:  # noqa: BLE001
                     content = f"Error: tool '{name}' failed ({type(exc).__name__}). Check the arguments."
             out.append(ToolMessage(content=content, tool_call_id=call["id"], name=name))
@@ -159,11 +178,26 @@ class SupportSystem:
             raise RuntimeError("GROQ_API_KEY is not set. Copy .env.example to .env and add your key.")
         self.graph = build_graph()
 
-    def chat(self, message: str, thread_id: str = "default") -> Dict[str, Any]:
-        cfg = {"configurable": {"thread_id": thread_id}, "recursion_limit": 30}
-        before = len(self.graph.get_state(cfg).values.get("messages", []))
+    def chat(self, message: str, thread_id: str, customer_id: str) -> Dict[str, Any]:
+        """Run one turn. `customer_id` must come from a successful `auth.authenticate()`."""
+        if not customer_id:
+            raise PermissionError("Authentication required: no customer_id supplied.")
+        cfg = {
+            "configurable": {"thread_id": thread_id},
+            "recursion_limit": 30,
+            # Shown in LangSmith when tracing is enabled (LANGSMITH_TRACING=true).
+            "run_name": "swiftsupport_turn",
+            "tags": ["swiftsupport"],
+            "metadata": {"customer_id": customer_id, "thread_id": thread_id},
+        }
+        existing = self.graph.get_state(cfg).values
+        owner = existing.get("customer_id")
+        if owner and owner != customer_id:
+            raise PermissionError("This conversation belongs to a different customer.")
+        before = len(existing.get("messages", []))
         result = self.graph.invoke(
-            {"messages": [HumanMessage(content=message)], "active_agent": self._active(cfg)}, cfg
+            {"messages": [HumanMessage(content=message)], "active_agent": self._active(cfg),
+             "customer_id": customer_id}, cfg
         )
         new_messages = result["messages"][before + 1:]
         reply = ""

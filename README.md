@@ -44,7 +44,7 @@ All tools live in [app/tools.py](app/tools.py), take and return strings, and nev
 | Tool | Signature | Behaviour |
 |---|---|---|
 | `search_catalog` | `(query: str) -> str` | TF-IDF-style keyword search over name/category/description; understands `under $N`; flags stock levels; top 5 results |
-| `check_order_status` | `(order_id: str) -> str` | Accepts `ORD-10001`, `10001`, `ord10001`. Unknown ID returns a message asking for clarification |
+| `check_order_status` | `(order_id: str) -> str` | Accepts `ORD-10001`, `10001`, `ord10001`. Unknown (or someone else's) ID returns a message asking for clarification |
 | `calculate_refund_eligibility` | `(order_id: str) -> str` | Delivered and ≤30 days → `Approved`. Otherwise `Denied` / `Not Yet Eligible` with the policy reason |
 | `process_refund` | `(order_id: str) -> str` | Mock refund; succeeds only when `Approved` |
 
@@ -75,11 +75,42 @@ Get a free key at <https://console.groq.com/keys>.
 > `llama3-70b-8192` and `mixtral-8x7b-32768` have been retired by Groq. Model availability varies by
 > account; list yours with `groq.Groq().models.list()` and set `GROQ_MODEL` to any tool-calling model.
 
+## Authentication and access control
+
+Customers sign in with a customer ID and PIN (PBKDF2-hashed in `data/customers.csv`, 5 failed
+attempts lock the account for 5 minutes). See [app/auth.py](app/auth.py).
+
+- The authenticated `customer_id` lives in the graph state and is **injected into every order tool
+  by the application**. The LLM never sees or supplies it, and any `customer_id` it tries to pass
+  is discarded.
+- Orders owned by someone else look exactly like non-existent orders, so IDs can't be probed.
+- Without a login the order tools refuse to run.
+
+**Demo credentials:** `CUST-001` / `1001`, `CUST-002` / `1002`, … `CUST-012` / `1012`.
+Example: `ORD-10002` belongs to `CUST-002`, so `CUST-001` asking about it gets "not found".
+
+> This is a demo scheme for mock data. For production use a real identity provider (OAuth/SSO).
+
+## Tracing (optional, LangSmith)
+
+Set these in `.env` (or your host's secrets) to trace every turn, LLM call and tool call at
+<https://smith.langchain.com> (free tier):
+
+```
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=...
+LANGSMITH_PROJECT=swiftsupport-commerce
+```
+
+Runs are tagged `swiftsupport` with `customer_id` and `thread_id` metadata. The sidebar shows
+"LangSmith tracing is on" when enabled. Tracing sends prompts and customer messages to LangSmith,
+so leave it off for sensitive data.
+
 ## Testing
 
 ```bash
-pytest                      # offline tool tests, no API key needed
-python -m tests.evaluate    # live batch test of the agents (uses Groq)
+pytest                      # 23 offline tests (tools, auth, access control); no API key needed
+python -m tests.evaluate    # live 8-case batch test of the agents (uses Groq)
 ```
 
 ## Free hosting
@@ -110,16 +141,15 @@ python -m tests.evaluate    # live batch test of the agents (uses Groq)
 ## Project layout
 
 ```
-app/        agents.py (graph), tools.py, prompts.py, state.py, config.py
-data/       products.csv, orders.csv
-tests/      test_tools.py (offline), evaluate.py (live batch eval)
+app/        agents.py (graph), tools.py, auth.py, prompts.py, state.py, config.py
+data/       products.csv, orders.csv, customers.csv
+tests/      test_tools.py, test_auth.py (offline), evaluate.py (live batch eval)
 main.py     CLI chat          streamlit_app.py   web chat UI
 Dockerfile  .env.example  requirements.txt
 ```
 
 ## Limitations
-Mock data only: no authentication, so any customer can query any order. Add identity verification
-before using real data. Refunds are simulated.
+Mock data only, with a demo-grade login (see above). Refunds are simulated.
 
 ## License
 MIT

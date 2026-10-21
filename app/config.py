@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 PRODUCTS_CSV = DATA_DIR / "products.csv"
 ORDERS_CSV = DATA_DIR / "orders.csv"
+CUSTOMERS_CSV = DATA_DIR / "customers.csv"
 
 load_dotenv(ROOT_DIR / ".env")
 
@@ -33,6 +34,13 @@ def get_model() -> str:
 
 def get_fallback_model() -> str:
     return os.getenv("GROQ_FALLBACK_MODEL", DEFAULT_FALLBACK_MODEL)
+
+
+def tracing_enabled() -> bool:
+    """LangSmith tracing is switched on purely via env vars (LANGCHAIN_/LANGSMITH_*)."""
+    on = (os.getenv("LANGSMITH_TRACING") or os.getenv("LANGCHAIN_TRACING_V2") or "").lower() == "true"
+    has_key = bool(os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY"))
+    return on and has_key
 
 
 def today() -> date:

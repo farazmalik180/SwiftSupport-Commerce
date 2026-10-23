@@ -1,5 +1,11 @@
 # 🛍️ SwiftSupport Commerce
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Framework: LangGraph](https://img.shields.io/badge/Framework-LangGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![Inference: Groq](https://img.shields.io/badge/Inference-Groq-f55036.svg)](https://groq.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://farazmalik180-swiftsupport-commerce-streamlit-app-rwulgl.streamlit.app/)
+
 An open-source, multi-agent **E-Commerce Customer Support & Concierge** system built with
 **LangGraph** and **Groq** (free tier), backed by mock CSV datasets.
 
@@ -36,6 +42,35 @@ flowchart LR
 
 Every agent's system prompt (see [app/prompts.py](app/prompts.py)) enforces a
 **Thought → Tool Call → Observation** loop. The UI shows this trace per reply.
+
+### Example Conversations
+
+<details>
+<summary><b>1. Order Tracking with Scoped Ownership</b></summary>
+
+> **Customer (`CUST-002`):** Where is my order ORD-10002?  
+> **Agent (Orders):** 💭 *Thought: check status for ORD-10002* → `check_order_status(order_id='ORD-10002')`  
+> **Observation:** `Order ORD-10002: UrbanStride Running Shoes | status: Shipped | tracking: TRK564738291US`  
+> **Reply:** Your order **ORD-10002** (UrbanStride Running Shoes) has been shipped with tracking number **TRK564738291US**.
+</details>
+
+<details>
+<summary><b>2. Privacy & Account Isolation (Cross-Customer Attempt)</b></summary>
+
+> **Customer (`CUST-001`):** Where is order ORD-10002?  
+> **Agent (Orders):** `check_order_status(order_id='ORD-10002')`  
+> **Observation:** `Order 'ORD-10002' was not found.`  
+> **Reply:** I couldn't locate an order with ID **ORD-10002** on your account. Please double-check your order number.
+</details>
+
+<details>
+<summary><b>3. Catalog Search & Out-of-Stock Alternative</b></summary>
+
+> **Customer:** Do you have the ErgoFlex Office Chair?  
+> **Agent (Catalog):** `search_catalog(query='ErgoFlex Office Chair')`  
+> **Observation:** `[P1005] ErgoFlex Office Chair | OUT OF STOCK`  
+> **Reply:** The ErgoFlex Office Chair is currently out of stock. Would you like to check out the **StandUp Electric Desk** or another ergonomic option?
+</details>
 
 ## Tool schemas
 
